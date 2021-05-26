@@ -15,7 +15,7 @@ PyTree = Any
 
 
 @struct.dataclass
-class PyTreeArrayT:
+class PyTreeArray:
     tree: PyTree
     treedefs: Any = struct.field(pytree_node=False)
     axes: Any = struct.field(pytree_node=False)  # Trees with the number of axes
@@ -80,7 +80,7 @@ class PyTreeArrayT:
         tree = treedef.unflatten(tree_flat)
 
         axes = self.axes[::-1]
-        return PyTreeArrayT(tree, treedefs, axes)
+        return PyTreeArray(tree, treedefs, axes)
 
     def tree_trans(self):
         # TODO arbitrary axes
@@ -97,7 +97,7 @@ class PyTreeArrayT:
         if jnp.isscalar(t):
             res = jax.tree_map(lambda x: x + t, self.tree)
             return self.replace(tree=res)
-        elif isinstance(t, PyTreeArrayT):
+        elif isinstance(t, PyTreeArray):
             return self + t.tree
         else:  # PyTree
             assert self._treedef == jax.tree_structure(t)
@@ -122,7 +122,7 @@ class PyTreeArrayT:
     def __mul__(self, t: PyTree):
         if jnp.isscalar(t):
             return self._elementwise(lambda x: x * t)
-        elif isinstance(t, PyTreeArrayT):
+        elif isinstance(t, PyTreeArray):
             # TODO check equal treedef_l and treedef_r, axes
             return self * t.tree
         else:  # PyTree
@@ -133,7 +133,7 @@ class PyTreeArrayT:
     def __truediv__(self, t: PyTree):
         if jnp.isscalar(t):
             return self._elementwise(lambda x: x / t)
-        elif isinstance(t, PyTreeArrayT):
+        elif isinstance(t, PyTreeArray):
             # TODO check equal treedef_l and treedef_r, axes
             return self / t.tree
         else:  # PyTree
@@ -144,7 +144,7 @@ class PyTreeArrayT:
     def __sub__(self, t: PyTree):
         if jnp.isscalar(t):
             return self._elementwise(lambda x: x - t)
-        elif isinstance(t, PyTreeArrayT):
+        elif isinstance(t, PyTreeArray):
             return self - t.tree
         else:  # PyTree
             assert self._treedef == jax.tree_structure(t)
@@ -161,9 +161,9 @@ class PyTreeArrayT:
     def __matmul__(pt1, pt2):
 
         # TODO!!
-        if not isinstance(pt2, PyTreeArrayT):
+        if not isinstance(pt2, PyTreeArray):
             # assume its a pytree vector
-            pt2 = PyTreeArray(pt2)
+            pt2 = PyTreeArray1(pt2)
         else:
             assert not pt2._isnd(0)
 
@@ -195,13 +195,13 @@ class PyTreeArrayT:
             is_leaf=is_leaf,
         )
         if pt1_1d and pt2_1d:
-            return PyTreeArrayT(tree, (), ())
+            return PyTreeArray(tree, (), ())
         elif pt1_1d:
-            return PyTreeArrayT(tree, (pt2.treedef_r,), (pt2.axes_r,))
+            return PyTreeArray(tree, (pt2.treedef_r,), (pt2.axes_r,))
         elif pt2_1d:
-            return PyTreeArrayT(tree, (pt1.treedef_l,), (pt1.axes_l,))
+            return PyTreeArray(tree, (pt1.treedef_l,), (pt1.axes_l,))
         else:
-            return PyTreeArrayT(tree, (pt1.treedef_l, pt2.treedef_r), (pt1.axes_l, pt2.axes_r))
+            return PyTreeArray(tree, (pt1.treedef_l, pt2.treedef_r), (pt1.axes_l, pt2.axes_r))
 
     def conjugate(self):
         return self._elementwise(jnp.conj)
@@ -298,7 +298,7 @@ class PyTreeArrayT:
         return self.replace(tree=tree, axes=(axes_l,) + self.axes[1:])
 
     def astype(self, dtype_tree):
-        if isinstance(dtype_tree, PyTreeArrayT):
+        if isinstance(dtype_tree, PyTreeArray):
             dtype_tree = dtype_tree.tree
         tree = jax.tree_multimap(lambda x, y: x.astype(y), self.tree, dtype_tree)
         return self.replace(tree=tree)
@@ -335,7 +335,7 @@ class PyTreeArrayT:
         treedef = _treedefs_compose(*new_treedefs)
         tree = treedef.unflatten(tree_flat)
 
-        return PyTreeArrayT(tree, new_treedefs, new_axes)
+        return PyTreeArray(tree, new_treedefs, new_axes)
 
 
 def _treedefs_compose(*treedefs):
@@ -351,22 +351,22 @@ def _swaptuple(t, i, j):
 
 _arr_treedef = jax.tree_structure(jnp.zeros(0))  # TODO proper way to get * ??
 
-# for a vector
-def PyTreeArray(t):
+# for a (tree) vector
+def PyTreeArray1(t):
     treedef_l = jax.tree_structure(t)
     # treedef_r = _arr_treedef
     axes_l = jax.tree_map(jnp.ndim, t)
     # axes_r = 0
-    return PyTreeArrayT(t, (treedef_l,), (axes_l,))
+    return PyTreeArray(t, (treedef_l,), (axes_l,))
 
 
-# for the oks
+# for a (normal) vector of (tree) vectors
 def PyTreeArray2(t):
     treedef_l = _arr_treedef
     treedef_r = jax.tree_structure(t)
     axes_l = 1
     axes_r = jax.tree_map(lambda x: x - axes_l, jax.tree_map(jnp.ndim, t))
-    return PyTreeArrayT(t, (treedef_l, treedef_r), (axes_l, axes_r))
+    return PyTreeArray(t, (treedef_l, treedef_r), (axes_l, axes_r))
 
 
 def tree_allclose(t1, t2):
@@ -403,7 +403,7 @@ def multiply_outer(pt1, pt2):
     tree = jax.tree_map(lambda t1: jax.tree_map(lambda t2: jnp.outer(t1, t2), pt2.tree), pt1.tree)
     treedefs = pt1.treedefs + pt2.treedefs
     axes = pt1.axes + pt2.axes
-    return PyTreeArrayT(tree, treedefs, axes)
+    return PyTreeArray(tree, treedefs, axes)
 
 
 class leaf_tuple(tuple):
