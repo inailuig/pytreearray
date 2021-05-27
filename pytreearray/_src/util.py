@@ -18,13 +18,6 @@ def _flatten(t):
     return reduce(lambda x, y: x + y, t)
 
 
-def _swaptuple(t, i, j):
-    if i == j:
-        return t
-    i, j = min(i, j), max(i, j)
-    return t[:i] + t[j : j + 1] + t[i + 1 : j] + t[i : i + 1] + t[j + 1 :]
-
-
 _arr_treedef = jax.tree_structure(jnp.zeros(0))  # TODO proper way to get * ??
 
 ################################################################################
