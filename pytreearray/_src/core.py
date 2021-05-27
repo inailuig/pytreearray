@@ -85,7 +85,7 @@ class PyTreeArray:
     def __add__(self, t: PyTree):
         # elementwise or with a scalar
         if jnp.isscalar(t):
-            return self._elementwise(lambda x: x + t, self.tree)
+            return self._elementwise(lambda x: x + t)
         elif isinstance(t, PyTreeArray):
             return self + t.tree
         else:  # PyTree
