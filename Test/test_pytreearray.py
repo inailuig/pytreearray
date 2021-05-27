@@ -104,3 +104,15 @@ def test_to_dense(matr):
     actual = Ap.to_dense()
     expected = A_flat
     assert tree_allclose(actual, expected)
+
+
+def test_add_diag(matr):
+    Ap = matr
+    A_flat = jax.vmap(lambda x: jax.flatten_util.ravel_pytree(x)[0])(Ap.tree)
+
+    Ap = Ap.T @ Ap
+    A_flat = A_flat.T @ A_flat
+    s = 1.23
+    actual = Ap.add_diag_scalar(s).to_dense()
+    expected = A_flat + jnp.eye(A_flat.shape[0]) * s
+    assert tree_allclose(actual, expected)
