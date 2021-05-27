@@ -137,6 +137,12 @@ class PyTreeArray:
             res = jax.tree_multimap(jnp.divide, self.tree, t)
             return self.replace(tree=res)
 
+    def __rtruediv__(self, t: PyTree):
+        if jnp.isscalar(t):
+            return self._elementwise(lambda x: t / x)
+        else:
+            raise NotImplementedError
+
     def __sub__(self, t: PyTree):
         if jnp.isscalar(t):
             return self._elementwise(lambda x: x - t)
