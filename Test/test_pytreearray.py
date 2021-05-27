@@ -43,9 +43,9 @@ unary_funcs["mul_l"] = lambda x: 1.23 * x
 unary_funcs["mul_r"] = lambda x: x * 1.23
 unary_funcs["div_l"] = lambda x: 1.23 / x
 unary_funcs["div_r"] = lambda x: x / 1.23
-unary_funcs["pow"] = lambda x: x ** 3
-unary_funcs["transpose"] = lambda x: x.transpose()
-unary_funcs["conjugate"] = lambda x: x.conjugate()
+unary_funcs["pow"] = lambda x: x ** 1.23
+unary_funcs["transpose"] = lambda x: x.T
+unary_funcs["conjugate"] = lambda x: x.conj()
 unary_funcs["real"] = lambda x: x.real
 unary_funcs["imag"] = lambda x: x.imag
 

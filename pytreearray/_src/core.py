@@ -178,9 +178,9 @@ class PyTreeArray:
     def real(self):
         return self._elementwise(jnp.real)
 
-    @property
-    def H(self):
-        return self.T.conj()
+    # @property
+    # def H(self):
+    #     return self.T.conj()
 
     def _flatten_tensors(self):
         tree = amap(_flatten_tensors, self.tree, self.axes)
