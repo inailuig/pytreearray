@@ -28,3 +28,6 @@ def transpose(pt):
 
     axes = pt.axes[::-1]
     return core.PyTreeArray(tree, treedefs, axes)
+
+
+# TODO generalize to permute arbitrary axes ([::-1] -> permutation)

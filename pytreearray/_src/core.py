@@ -9,7 +9,6 @@ from operator import mul
 
 from .util import _arr_treedef, amap, _treedefs_compose
 
-from .swapaxes import swapaxes
 from .transpose import transpose
 from .dense import to_dense, _flatten_tensors
 from .matmul import matmul
@@ -240,9 +239,6 @@ class PyTreeArray:
     # for the iterative solvers
     def __call__(self, vec):
         return self @ vec
-
-    def swapaxes(self, i, j):
-        return swapaxes(self, i, j)
 
 
 # for a (tree) vector
