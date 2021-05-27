@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from functools import partial, reduce
 
 from .util import amap, _treedefs_compose, _swaptuple
+from . import core
 
 
 def _swapaxes(x, axes, i, j):
@@ -44,4 +45,4 @@ def swapaxes(pt, i, j):
     treedef = _treedefs_compose(*new_treedefs)
     tree = treedef.unflatten(tree_flat)
 
-    return PyTreeArray(tree, new_treedefs, new_axes)
+    return core.PyTreeArray(tree, new_treedefs, new_axes)

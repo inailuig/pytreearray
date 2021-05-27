@@ -2,6 +2,9 @@ import jax
 import jax.numpy as jnp
 from functools import partial, reduce
 
+from .util import _arr_treedef, _treedefs_compose
+from . import core
+
 
 def tree_dot(t1, t2, axes_tree):
     # TODO default withhout axes
@@ -32,7 +35,7 @@ def _matmul(pt1, pt2):
     return tree
 
 
-def __matmul__(pt1, pt2):
+def matmul(pt1, pt2):
     # contracts the last dim of pt1 with the first dim of pt2
     # TODO eventually replace with a call to tensordot
 
@@ -52,10 +55,10 @@ def __matmul__(pt1, pt2):
     tree = _matmul(pt1, pt2)
 
     if pt1_1d and pt2_1d:
-        return PyTreeArray(tree, (), ())
+        return core.PyTreeArray(tree, (), ())
     elif pt1_1d:
-        return PyTreeArray(tree, (pt2.treedefs[1:],), (pt2.axes[1:],))
+        return core.PyTreeArray(tree, pt2.treedefs[1:], pt2.axes[1:])
     elif pt2_1d:
-        return PyTreeArray(tree, (pt1.treedefs[:-1],), (pt1.axes[:-1],))
+        return core.PyTreeArray(tree, pt1.treedefs[:-1], pt1.axes[:-1])
     else:
-        return PyTreeArray(tree, (pt1.treedef[:-1], pt2.treedefs[1:]), (pt1.axes[:-1], pt2.axes[1:]))
+        return core.PyTreeArray(tree, pt1.treedefs[:-1] + pt2.treedefs[1:], pt1.axes[:-1] + pt2.axes[1:])

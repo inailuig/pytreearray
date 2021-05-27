@@ -10,7 +10,7 @@ from operator import mul
 
 import math
 
-from .util import _cumsum, _flatten
+from .util import _cumsum, _flatten, _arr_treedef, amap
 
 from .swapaxes import swapaxes
 from .transpose import transpose
@@ -183,10 +183,10 @@ class PyTreeArray:
     def _flatten_tensors(self):
         tree = amap(_flatten_tensors, self.tree, self.axes)
         _set1 = lambda x: jax.tree_map(lambda _: 1, x)
-        axes = _set1(pt.axes)
-        return pt.replace(tree=tree, axes=axes)
+        axes = _set1(self.axes)
+        return self.replace(tree=tree, axes=axes)
 
-    def to_dense():
+    def to_dense(self):
         return to_dense(self)
 
     def add_diag_scalar(self, a):

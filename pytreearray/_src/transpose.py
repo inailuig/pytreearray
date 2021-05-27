@@ -2,7 +2,8 @@ import jax
 import jax.numpy as jnp
 from functools import partial, reduce
 
-from .util import amap, _cumsum, _flatten
+from .util import amap, _cumsum, _flatten, _treedefs_compose
+from . import core
 
 
 def _transpose(x, axes):
@@ -27,4 +28,4 @@ def transpose(pt):
     tree = treedef.unflatten(tree_flat)
 
     axes = pt.axes[::-1]
-    return PyTreeArray(tree, treedefs, axes)
+    return core.PyTreeArray(tree, treedefs, axes)

@@ -1,3 +1,5 @@
+import jax
+import jax.numpy as jnp
 from functools import reduce
 
 

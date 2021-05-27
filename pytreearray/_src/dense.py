@@ -2,10 +2,15 @@ import jax
 import jax.numpy as jnp
 from functools import partial, reduce
 
+from .util import amap, _cumsum
+
+from operator import mul
+
 
 def _flatten_tensors(x, axes):
     shape = x.shape
     start = _cumsum((0,) + axes[:-1])
+    _prod = lambda x: reduce(mul, x, 1)
 
     def _f(il):
         i, l = il
