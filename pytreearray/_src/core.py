@@ -10,7 +10,7 @@ from operator import mul
 
 import math
 
-from .util import _cumsum, _flatten, _arr_treedef, amap
+from .util import _cumsum, _flatten, _arr_treedef, amap, _treedefs_compose
 
 from .swapaxes import swapaxes
 from .transpose import transpose
@@ -52,7 +52,7 @@ class PyTreeArray:
         return td
 
     def _leafdef(self, start, end=-1):
-        td = reduce(lambda s1, s2: s1.compose(s2), self.treedefs[i:end])
+        td = _treedefs_compose(*self.treedefs[start:end])
         assert td == jax.tree_structure(self.tree)
         return td
 
