@@ -13,7 +13,10 @@ jax.config.update("jax_enable_x64", True)  # noqa: E402
 def vec():
     seed = 123
     key = jax.random.PRNGKey(seed)
-    x = {"a": jnp.ones((3, 4)), "b": ((jnp.ones((2)), jnp.ones((2, 2))))}
+    x = {
+        "a": jnp.ones((3, 4), dtype=jnp.complex128),
+        "b": ((jnp.ones((2), dtype=jnp.complex128), jnp.ones((2, 2), dtype=jnp.complex128))),
+    }
     x = tree_random_normal_like(key, x)
     return pta.PyTreeArray1(x)
 
@@ -22,7 +25,10 @@ def vec():
 def matr():
     seed = 123
     key = jax.random.PRNGKey(seed)
-    A = {"a": jnp.ones((100, 3, 4)), "b": ((jnp.ones((100, 2)), jnp.ones((100, 2, 2))))}
+    A = {
+        "a": jnp.ones((100, 3, 4), dtype=jnp.complex128),
+        "b": ((jnp.ones((100, 2), dtype=jnp.complex128), jnp.ones((100, 2, 2), dtype=jnp.complex128))),
+    }
     A = tree_random_normal_like(key, A)
     return pta.PyTreeArray2(A)
 
@@ -40,6 +46,8 @@ unary_funcs["div_r"] = lambda x: x / 1.23
 unary_funcs["pow"] = lambda x: x ** 3
 unary_funcs["transpose"] = lambda x: x.transpose()
 unary_funcs["conjugate"] = lambda x: x.conjugate()
+unary_funcs["real"] = lambda x: x.real
+unary_funcs["imag"] = lambda x: x.imag
 
 
 @pytest.mark.parametrize("name, f", unary_funcs.items())
