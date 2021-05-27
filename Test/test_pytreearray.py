@@ -1,10 +1,12 @@
 import pytest
+import numpy as np
 import jax
 import jax.numpy as jnp
 import jax.flatten_util
 import pytreearray as pta
 
 from pytreearray._src.util import tree_allclose, tree_random_normal_like
+import pytreearray.multiply
 
 jax.config.update("jax_enable_x64", True)  # noqa: E402
 
@@ -123,4 +125,11 @@ def test_sum(matr):
     A_flat = jax.vmap(lambda x: jax.flatten_util.ravel_pytree(x)[0])(Ap.tree)
     actual = Ap.sum(axis=0).to_dense()
     expected = A_flat.sum(axis=0)
+    assert tree_allclose(actual, expected)
+
+
+def test_multiply_outer(vec):
+    x_flat, unflatten = jax.flatten_util.ravel_pytree(vec.tree)
+    actual = pytreearray.multiply.outer(vec, vec).to_dense()
+    expected = np.multiply.outer(x_flat, x_flat)
     assert tree_allclose(actual, expected)

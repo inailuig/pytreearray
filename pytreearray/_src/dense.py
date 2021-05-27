@@ -1,4 +1,5 @@
 import jax
+import jax.numpy as jnp
 from functools import partial, reduce
 
 from .util import amap, _cumsum
@@ -25,12 +26,13 @@ def _flatten_tensors(x, axes):
 
 def to_dense(pt):
     tree_flat = amap(_flatten_tensors, pt.tree, pt.axes)
-    for i, td in enumerate(pt.treedefs[::-1]):
+    for i, td in list(enumerate(pt.treedefs))[::-1]:
         is_leaf = lambda l: jax.tree_structure(l) == td
 
-        @partial(jax.vmap, in_axes=i, out_axes=i)
         def _f(x):
-            return jax.flatten_util.ravel_pytree(x)[0]
+            l, _ = jax.tree_flatten(x)
+            return jnp.concatenate(l, axis=i)  # this is the ravel_pytree part
 
         tree_flat = jax.tree_map(_f, tree_flat, is_leaf=is_leaf)
+
     return tree_flat
