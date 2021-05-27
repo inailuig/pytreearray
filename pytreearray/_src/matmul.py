@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-from functools import partial, reduce
 
 from .util import _arr_treedef, _treedefs_compose
 from . import core

@@ -68,4 +68,6 @@ def build_size_tree(*shapedefs):
 
 
 def tree_allclose(t1, t2):
-    return jax.tree_structure(t1) == jax.tree_structure(t2) and jax.tree_util.tree_reduce(lambda x, y: x and y, jax.tree_multimap(jnp.allclose, t1, t2))
+    return jax.tree_structure(t1) == jax.tree_structure(t2) and jax.tree_util.tree_reduce(
+        lambda x, y: x and y, jax.tree_multimap(jnp.allclose, t1, t2)
+    )

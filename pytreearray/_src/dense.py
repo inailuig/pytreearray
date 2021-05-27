@@ -1,5 +1,4 @@
 import jax
-import jax.numpy as jnp
 from functools import partial, reduce
 
 from .util import amap, _cumsum

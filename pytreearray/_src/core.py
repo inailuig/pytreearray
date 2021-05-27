@@ -2,15 +2,12 @@ import jax
 import jax.numpy as jnp
 import jax.flatten_util
 from flax import struct
-from functools import partial, reduce, singledispatchmethod
-from typing import Any, Sequence, Callable, Collection, Union
+from functools import partial, reduce
+from typing import Any
 
-from functools import reduce
 from operator import mul
 
-import math
-
-from .util import _cumsum, _flatten, _arr_treedef, amap, _treedefs_compose
+from .util import _arr_treedef, amap, _treedefs_compose
 
 from .swapaxes import swapaxes
 from .transpose import transpose

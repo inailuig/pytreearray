@@ -21,7 +21,7 @@ def _swapaxes(x, axes, i, j):
     axes_middle = _prod(axes[i + 1 : j])
     start_j = axes_before + axes_i + axes_middle
     axes_j = axes[j]
-    axes_after = _prod(axes[j + 1 :])
+    # axes_after = _prod(axes[j + 1 :])
 
     ax_pos_i = tuple(range(start_i, start_i + axes_i))
     ax_pos_j = tuple(range(start_j, start_j + axes_j))

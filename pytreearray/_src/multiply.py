@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-from functools import partial, reduce
 
 from . import core
 

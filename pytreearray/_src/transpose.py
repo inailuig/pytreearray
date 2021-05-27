@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-from functools import partial, reduce
 
 from .util import amap, _cumsum, _flatten, _treedefs_compose
 from . import core
