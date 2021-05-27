@@ -116,3 +116,11 @@ def test_add_diag(matr):
     actual = Ap.add_diag_scalar(s).to_dense()
     expected = A_flat + jnp.eye(A_flat.shape[0]) * s
     assert tree_allclose(actual, expected)
+
+
+def test_sum(matr):
+    Ap = matr
+    A_flat = jax.vmap(lambda x: jax.flatten_util.ravel_pytree(x)[0])(Ap.tree)
+    actual = Ap.sum(axis=0).to_dense()
+    expected = A_flat.sum(axis=0)
+    assert tree_allclose(actual, expected)
