@@ -66,6 +66,7 @@ binary_funcs["add"] = lambda x, y: x + y
 binary_funcs["sub"] = lambda x, y: x - y
 binary_funcs["mul"] = lambda x, y: x * y
 binary_funcs["div"] = lambda x, y: x / y
+binary_funcs["astype"] = lambda x, y: x.astype(y.dtype)
 
 
 @pytest.mark.parametrize("name, f", binary_funcs.items())
