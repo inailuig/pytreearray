@@ -87,3 +87,12 @@ def test_matmul2(vec, matr):
     actual = ((Ap.T @ Ap) @ xp).tree
     expected = unflatten(A_flat.T @ A_flat @ x_flat)
     assert tree_allclose(actual, expected)
+
+
+def test_to_dense(matr):
+    Ap = matr
+    A_flat = jax.vmap(lambda x: jax.flatten_util.ravel_pytree(x)[0])(Ap.tree)
+
+    actual = Ap.to_dense()
+    expected = A_flat
+    assert tree_allclose(actual, expected)
