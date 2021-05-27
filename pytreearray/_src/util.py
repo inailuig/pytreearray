@@ -51,15 +51,6 @@ def amap(f, tree, axes_trees):
     return jax.tree_multimap(f, tree, axes_tree)
 
 
-def size_multiply_outer(t1, t2):
-    # np.multiply.outer
-    return jax.tree_map(lambda l1: jax.tree_map(lambda l2: l1 * l2, t2), t1)
-
-
-def build_size_tree(*shapedefs):
-    return reduce(size_multiply_outer, shapedefs)
-
-
 ################################################################################
 # test stuff
 ################################################################################
