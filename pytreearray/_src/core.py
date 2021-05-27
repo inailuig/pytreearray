@@ -85,8 +85,7 @@ class PyTreeArray:
     def __add__(self, t: PyTree):
         # elementwise or with a scalar
         if jnp.isscalar(t):
-            res = jax.tree_map(lambda x: x + t, self.tree)
-            return self.replace(tree=res)
+            return self._elementwise(lambda x: x + t, self.tree)
         elif isinstance(t, PyTreeArray):
             return self + t.tree
         else:  # PyTree
@@ -104,7 +103,7 @@ class PyTreeArray:
         return (-self) + t
 
     def __neg__(self):
-        return (-1) * self
+        return self._elementwise(lambda x: -x)
 
     def _elementwise(self, f):
         return self.replace(tree=jax.tree_map(f, self.tree))
