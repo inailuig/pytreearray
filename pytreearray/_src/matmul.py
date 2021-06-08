@@ -43,21 +43,23 @@ def matmul(pt1, pt2):
 
     pt1_1d = False
     if pt1._is1d():
-        pt1 = pt1.replace(axes=(0,) + pt1.axes, treedefs=(_arr_treedef,) + pt1.treedefs)
+        pt1 = core._PyTreeArray(pt1.tree, (_arr_treedef,) + pt1.treedefs, (0,) + pt1.axes)  # TODO
+        # pt1 = pt1.replace(axes=(0,) + pt1.axes, treedefs=(_arr_treedef,) + pt1.treedefs)
         pt1_1d = True
 
     pt2_1d = False
     if pt2._is1d():
-        pt2 = pt2.replace(axes=pt2.axes + (0,), treedefs=pt2.treedefs + (_arr_treedef,))
+        pt2 = core._PyTreeArray(pt2.tree, pt2.treedefs + (_arr_treedef,), pt2.axes + (0,))
+        # pt2 = pt2.replace(axes=pt2.axes + (0,), treedefs=pt2.treedefs + (_arr_treedef,))
         pt2_1d = True
 
     tree = _matmul(pt1, pt2)
 
     if pt1_1d and pt2_1d:
-        return core.PyTreeArray(tree, (), ())
+        return core._PyTreeArray(tree, (), ())
     elif pt1_1d:
-        return core.PyTreeArray(tree, pt2.treedefs[1:], pt2.axes[1:])
+        return core._PyTreeArray(tree, pt2.treedefs[1:], pt2.axes[1:])
     elif pt2_1d:
-        return core.PyTreeArray(tree, pt1.treedefs[:-1], pt1.axes[:-1])
+        return core._PyTreeArray(tree, pt1.treedefs[:-1], pt1.axes[:-1])
     else:
-        return core.PyTreeArray(tree, pt1.treedefs[:-1] + pt2.treedefs[1:], pt1.axes[:-1] + pt2.axes[1:])
+        return core._PyTreeArray(tree, pt1.treedefs[:-1] + pt2.treedefs[1:], pt1.axes[:-1] + pt2.axes[1:])

@@ -19,4 +19,4 @@ def multiply_outer(pt1, pt2):
     tree = tree_multiply_outer(pt1.tree, pt2.tree)
     treedefs = pt1.treedefs + pt2.treedefs
     axes = pt1.axes + pt2.axes
-    return core.PyTreeArray(tree, treedefs, axes)
+    return core._PyTreeArray(tree, treedefs, axes)

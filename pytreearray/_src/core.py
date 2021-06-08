@@ -17,11 +17,49 @@ PyTree = Any
 # Scalar = Union[float, int, complex]
 
 
+def _full_ta(tree, attr):
+    if not isinstance(tree, PyTreeArray):
+        return ()
+    # extract the nested pytreedefs
+    res, _ = jax.tree_util.tree_flatten(tree.tree_, is_leaf=lambda x: isinstance(x, PyTreeArray))
+    child1 = res[0]
+    # TODO check other children have the same (sub) treedefs & axes
+    return (getattr(tree, attr),) + _full_ta(child1, attr)
+
+
+def _gen_pt_treedef(treedef, axes_tree):
+    # TODO compose instead?
+    _fake_leaves = (jnp.zeros(()),) * treedef.num_leaves
+    _fake_tree = treedef.unflatten(_fake_leaves)
+    pt = PyTreeArray(_fake_tree, treedef, axes_tree)
+    td = jax.tree_structure(pt)
+    return td
+
+
+def _gen_full_pt_treedef(treedefs, axes):
+    tdfs = tuple(_gen_pt_treedef(t, a) for t, a in zip(treedefs, axes))
+    return _treedefs_compose(*tdfs)
+
+
 @struct.dataclass
 class PyTreeArray:
-    tree: PyTree
-    treedefs: Any = struct.field(pytree_node=False)
-    axes: Any = struct.field(pytree_node=False)  # Trees with the number of axes
+    tree_: PyTree
+    treedef: Any = struct.field(pytree_node=False)
+    axis_tree: Any = struct.field(pytree_node=False)  # Trees with the number of axes
+
+    @property
+    def tree(self):
+        # withhout PyTree stuff
+        tree_flat = jax.tree_leaves(self)
+        return _treedefs_compose(*self.treedefs).unflatten(tree_flat)
+
+    @property
+    def treedefs(self):
+        return _full_ta(self, "treedef")
+
+    @property
+    def axes(self):
+        return _full_ta(self, "axis_tree")
 
     @property
     def T(self):
@@ -91,7 +129,8 @@ class PyTreeArray:
         else:  # PyTree
             assert self._treedef == jax.tree_structure(t)
             res = jax.tree_multimap(jnp.add, self.tree, t)
-            return self.replace(tree=res)
+            return _PyTreeArray(res, self.treedefs, self.axes)  # TODO
+            # return self.replace(tree=res)
 
     def __rmul__(self, t):
         return self * t
@@ -106,7 +145,8 @@ class PyTreeArray:
         return self._elementwise(lambda x: -x)
 
     def _elementwise(self, f):
-        return self.replace(tree=jax.tree_map(f, self.tree))
+        return _PyTreeArray(jax.tree_map(f, self.tree), self.treedefs, self.axes)  # TODO
+        # return self.replace(tree=jax.tree_map(f, self.tree))
 
     def __mul__(self, t: PyTree):
         # elementwise or with a scalar
@@ -118,7 +158,8 @@ class PyTreeArray:
         else:  # PyTree
             assert self._treedef == jax.tree_structure(t)
             res = jax.tree_multimap(jnp.multiply, self.tree, t)
-            return self.replace(tree=res)
+            return _PyTreeArray(res, self.treedefs, self.axes)  # TODO
+            # return self.replace(tree=res)
 
     def __truediv__(self, t: PyTree):
         # elementwise or with a scalar
@@ -130,7 +171,8 @@ class PyTreeArray:
         else:  # PyTree
             assert self._treedef == jax.tree_structure(t)
             res = jax.tree_multimap(jnp.divide, self.tree, t)
-            return self.replace(tree=res)
+            return _PyTreeArray(res, self.treedefs, self.axes)  # TODO
+            # return self.replace(tree=res)
 
     def __rtruediv__(self, t: PyTree):
         if jnp.isscalar(t):
@@ -146,7 +188,8 @@ class PyTreeArray:
         else:  # PyTree
             assert self._treedef == jax.tree_structure(t)
             res = jax.tree_multimap(jnp.subtract, self.tree, t)
-            return self.replace(tree=res)
+            return _PyTreeArray(res, self.treedefs, self.axes)  # TODO
+            # return self.replace(tree=res)
 
     def __pow__(self, t):
         assert jnp.isscalar(t)
@@ -185,7 +228,8 @@ class PyTreeArray:
         tree = amap(_flatten_tensors, self.tree, self.axes)
         _set1 = lambda x: jax.tree_map(lambda _: 1, x)
         axes = _set1(self.axes)
-        return self.replace(tree=tree, axes=axes)
+        return _PyTreeArray(self.tree, self.treedefs, axes)  # TODO
+        # return self.replace(tree=tree, axes=axes)
 
     def to_dense(self):
         return to_dense(self)
@@ -215,7 +259,8 @@ class PyTreeArray:
             return jax.ops.index_add(x, i, a)
 
         tree = _tree_map_diag(partial(_add_diag_tensor, a=a), self.tree, _is_diag)
-        return self.replace(tree=tree)
+        return _PyTreeArray(tree, self.treedefs, self.axes)  # TODO
+        # return self.replace(tree=res)
 
     def sum(self, axis=0, keepdims=None):
         # for vectors only for now
@@ -226,18 +271,28 @@ class PyTreeArray:
         else:
             n_ax = 1 if isinstance(axis, int) else len(axis)
         axes_l = self.axes_l - n_ax
-        return self.replace(tree=tree, axes=(axes_l,) + self.axes[1:])
+        return _PyTreeArray(tree, self.treedefs, (axes_l,) + self.axes[1:])  # TODO
+        # return self.replace(tree=tree, axes=(axes_l,) + self.axes[1:])
 
     def astype(self, dtype_tree):
         if isinstance(dtype_tree, PyTreeArray):
             dtype_tree = dtype_tree.tree
         assert jax.tree_structure(dtype_tree) == self._treedef
         tree = jax.tree_multimap(lambda x, y: x.astype(y), self.tree, dtype_tree)
-        return self.replace(tree=tree)
+        return _PyTreeArray(tree, self.treedefs, self.axes)  # TODO
+        # return self.replace(tree=tree)
 
     # for the iterative solvers
     def __call__(self, vec):
         return self @ vec
+
+
+# for a (tree) vector
+def _PyTreeArray(tree, treedefs, axes):
+    # TODO checks?
+    leaves = jax.tree_leaves(tree)
+    pt_treedef = _gen_full_pt_treedef(treedefs, axes)
+    return pt_treedef.unflatten(leaves)
 
 
 # for a (tree) vector
@@ -246,7 +301,7 @@ def PyTreeArray1(t):
     # treedef_r = _arr_treedef
     axes_l = jax.tree_map(jnp.ndim, t)
     # axes_r = 0
-    return PyTreeArray(t, (treedef_l,), (axes_l,))
+    return _PyTreeArray(t, (treedef_l,), (axes_l,))
 
 
 # for a (normal) vector of (tree) vectors
@@ -255,7 +310,7 @@ def PyTreeArray2(t):
     treedef_r = jax.tree_structure(t)
     axes_l = 1
     axes_r = jax.tree_map(lambda x: x - axes_l, jax.tree_map(jnp.ndim, t))
-    return PyTreeArray(t, (treedef_l, treedef_r), (axes_l, axes_r))
+    return _PyTreeArray(t, (treedef_l, treedef_r), (axes_l, axes_r))
 
 
 # TODO eye_like / lazy add to diagonal

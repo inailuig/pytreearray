@@ -27,7 +27,7 @@ def transpose(pt):
     tree = treedef.unflatten(tree_flat)
 
     axes = pt.axes[::-1]
-    return core.PyTreeArray(tree, treedefs, axes)
+    return core._PyTreeArray(tree, treedefs, axes)  # TODO
 
 
 # TODO generalize to permute arbitrary axes ([::-1] -> permutation)
