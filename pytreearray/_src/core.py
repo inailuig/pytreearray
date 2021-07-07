@@ -287,7 +287,7 @@ class PyTreeArray:
         return self @ vec
 
 
-# for a (tree) vector
+# construct from non-nested treedefs and axes
 def _PyTreeArray(tree, treedefs, axes):
     # TODO checks?
     leaves = jax.tree_leaves(tree)

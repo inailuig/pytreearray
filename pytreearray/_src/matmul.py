@@ -56,7 +56,7 @@ def matmul(pt1, pt2):
     tree = _matmul(pt1, pt2)
 
     if pt1_1d and pt2_1d:
-        return core._PyTreeArray(tree, (), ())
+        return core._PyTreeArray(tree, _arr_treedef, 0)
     elif pt1_1d:
         return core._PyTreeArray(tree, pt2.treedefs[1:], pt2.axes[1:])
     elif pt2_1d:
