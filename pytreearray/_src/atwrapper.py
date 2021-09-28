@@ -5,6 +5,7 @@ from .core import PyTreeArray, _arr_treedef
 from .util import tree_allclose
 
 import jax
+import jax.numpy as jnp
 
 
 @struct.dataclass
@@ -17,13 +18,21 @@ class _IndexUpdateHelper:
         # x[(1,1,1),]
         #
         # TODO multiple indices & not just arrays, e.g. x[(1,1), (2,3), 'a'], & partial indexing of those
-
-        assert self.treedefs[0] == _arr_treedef
-        # TODO support slice & ellipsis
-        # TODO vectors with scalars?
+        assert self.pytreearr.treedefs[0] == _arr_treedef
         if isinstance(indices, int):
             indices = (indices,)
-        assert self.axes[0] >= len(indices)
+        elif isinstance(indices, tuple):
+            assert len(indices) == 1  # only support first dim for now
+            # -> pass a tuple if you want to acess the first axis if its multidimensional e.g. do [(i1,i2,...),]
+            (indices,) = indices
+            assert isinstance(indices, tuple)
+
+        # TODO support slice & ellipsis
+        # problem is that we cannot pass tuples of slices :/
+        # maybe do just [][][] for multiple axes...
+        # TODO vectors with scalars?
+
+        assert self.pytreearr.axes[0] >= len(indices)
         return _IndexUpdateRef(self.pytreearr, indices)
 
 
@@ -33,19 +42,19 @@ class _IndexUpdateRef:
     index: "idx"
 
     def _index_full_dim(self):
-        return self.pytreearr.axes[0] == len(self.indices)
-
-    def _new_treedefs(self):
-        if self._index_full_dim():
-            return self.axes[1:]
-        else:
-            return (self.axes[0] - len(indices),) + self.axes[1:]
+        return self.pytreearr.axes[0] == len(self.index)
 
     def _new_axes(self):
         if self._index_full_dim():
-            return self.treedefs[1:]
+            return self.pytreearr.axes[1:]
         else:
-            return self.treedefs
+            return (self.pytreearr.axes[0] - len(self.index),) + self.pytreearr.axes[1:]
+
+    def _new_treedefs(self):
+        if self._index_full_dim():
+            return self.pytreearr.treedefs[1:]
+        else:
+            return self.pytreearr.treedefs
 
     def _check(self, val):
         if isinstance(val, PyTreeArray):
@@ -83,14 +92,12 @@ class _IndexUpdateRef:
                 return x.at[self.index].set(val)
 
             _val = val if not isinstance(val, PyTreeArray) else val.tree
-            return jax.tree_multimap(_update, self.pytreearr, _val)
+            _tree = jax.tree_multimap(_update, self.pytreearr.tree, _val)
+            return self.pytreearr.replace(tree=_tree)
 
     def get(self):
         def _get(x):
-            return x.at[self.index]
+            return x.at[self.index].get()
 
-        tree = jax.tree_map(_get, self.pytreearr.tree)
-        if self.pytreearr.axes[0] == len(self.indices):
-            return PyTreeArray(tree, self.treedefs[1:], self.axes[1:])
-        else:
-            return PyTreeArray(tree, self.treedefs, (self.axes[0] - len(indices),) + self.axes[1:])
+        _tree = jax.tree_map(_get, self.pytreearr.tree)
+        return PyTreeArray(_tree, self._new_treedefs(), self._new_axes())

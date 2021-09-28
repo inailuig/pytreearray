@@ -155,6 +155,12 @@ class PyTreeArray:
     def __getitem__(self, *args, **kwargs):
         return self.tree.__getitem__(*args, **kwargs)
 
+    @property
+    def at(self):
+        from .atwrapper import _IndexUpdateHelper  # cause circular imports...
+
+        return _IndexUpdateHelper(self)
+
     def __matmul__(self, pt2):
         if not isinstance(pt2, PyTreeArray):
             # assume its a pytree vector
