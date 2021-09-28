@@ -43,7 +43,7 @@ class PyTreeArray:
 
     @property
     def size(self):
-        return jax.tree_util.tree_reduce(lambda x,y: x+y, jax.tree_map(jnp.size, self.tree))
+        return jax.tree_util.tree_reduce(lambda x, y: x + y, jax.tree_map(jnp.size, self.tree))
 
     @property
     def _treedef(self):
@@ -222,6 +222,7 @@ class PyTreeArray:
         return self.replace(tree=tree)
 
     def sum(self, axis=0, keepdims=None):
+        # TODO make it consistent w/ numpy
         # for vectors only for now
         assert self.treedef_l == _arr_treedef
         tree = jax.tree_map(partial(jnp.sum, axis=axis, keepdims=keepdims), self.tree)
@@ -242,6 +243,9 @@ class PyTreeArray:
     # for the iterative solvers
     def __call__(self, vec):
         return self @ vec
+
+    def __jax_array__(self):
+        return jnp.array(())  # self.tree
 
 
 # for a (tree) vector
