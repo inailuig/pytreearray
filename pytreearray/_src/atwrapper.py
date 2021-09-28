@@ -70,21 +70,14 @@ class _IndexUpdateRef:
 
         self._check(val)
 
-        if isinstance(val, Number) or hasattr(val, "shape") and val.ndim == 0:
+        def _update(x, val):
+            return x.at[self.index].set(val)
 
-            def _update(x):
-                return x.at[self.index].set(val)
+        if isinstance(val, PyTreeArray):
+            val = val.tree
 
-            return jax.tree_map(_update, self.pytreearr)
-
-        else:
-
-            def _update(x, val):
-                return x.at[self.index].set(val)
-
-            _val = val if not isinstance(val, PyTreeArray) else val.tree
-            _tree = jax.tree_multimap(_update, self.pytreearr.tree, _val)
-            return self.pytreearr.replace(tree=_tree)
+        _tree = jax.tree_multimap(_update, self.pytreearr.tree, val)
+        return self.pytreearr.replace(tree=_tree)
 
     def get(self):
         def _get(x):
