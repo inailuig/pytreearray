@@ -13,24 +13,15 @@ class _IndexUpdateHelper:
     pytreearr: PyTreeArray
 
     def __getitem__(self, indices):
-        # only support indexing the first array for now
-        # for multidimensional arrays in the treedefs[0] do
-        # x[(1,1,1),]
-        #
-        # TODO multiple indices & not just arrays, e.g. x[(1,1), (2,3), 'a'], & partial indexing of those
-        assert self.pytreearr.treedefs[0] == _arr_treedef
-        if isinstance(indices, int):
-            indices = (indices,)
-        elif isinstance(indices, tuple):
-            assert len(indices) == 1  # only support first dim for now
-            # -> pass a tuple if you want to acess the first axis if its multidimensional e.g. do [(i1,i2,...),]
-            (indices,) = indices
-            assert isinstance(indices, tuple)
+        # only support indexing the first dim for now
+        # TODO can we make it work so that multiple indices use .get[].get[]
+        # by adding .at to _IndexUpdateRef ?
+        # What already works is multiple .at[].get().at[].get(), but not for the setter :/
 
-        # TODO support slice & ellipsis
-        # problem is that we cannot pass tuples of slices :/
-        # maybe do just [][][] for multiple axes...
-        # TODO vectors with scalars?
+        assert self.pytreearr.treedefs[0] == _arr_treedef
+        if not isinstance(indices, tuple):
+            indices = (indices,)
+        # TODO return scalars as scalars? (now they are PyTreeArrays of a scalar)
 
         assert self.pytreearr.axes[0] >= len(indices)
         return _IndexUpdateRef(self.pytreearr, indices)
@@ -67,7 +58,7 @@ class _IndexUpdateRef:
             assert tree_allclose(val.axes, self._new_axes())
         else:
             if len(self._new_treedefs()) == 0:
-                raise NotImplementedError
+                pass
             elif len(self._new_treedefs()) == 1:
                 assert jax.tree_structure(val) == self._new_treedefs()[0]
                 assert tree_allclose(jax.tree_map(jnp.ndim, val), self._new_axes()[0])
