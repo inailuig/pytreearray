@@ -244,9 +244,6 @@ class PyTreeArray:
     def __call__(self, vec):
         return self @ vec
 
-    def __jax_array__(self):
-        return jnp.array(())  # self.tree
-
 
 # for a (tree) vector
 def PyTreeArray1(t):
